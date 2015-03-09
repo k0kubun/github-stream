@@ -39,3 +39,8 @@ func parseEvents(body string) []Event {
 	decoder.Decode(&events)
 	return events
 }
+
+// not implemented yet
+func (e *Event) instantiate() *Event {
+	return e
+}

@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -59,13 +60,13 @@ func (s *Stream) pollEvents() {
 
 		events := s.getEvents()
 		for i := len(events) - 1; i >= 0; i-- {
-			event := events[i]
-			s.Events <- event
+			s.Events <- events[i].instantiate()
 		}
 	}
 }
 
 func (s *Stream) getEvents() []Event {
+	includeLast := false
 	events := s.getFirstPage()
 
 	lastId := s.lastId
@@ -77,12 +78,17 @@ func (s *Stream) getEvents() []Event {
 		slice := []Event{}
 		for _, event := range events {
 			if event.Id == s.lastId {
+				includeLast = true
 				break
 			}
 			slice = append(slice, event)
 		}
 
 		events = slice
+	}
+
+	if !includeLast && len(events) > 0 {
+		go s.loadPage(2, events[len(events)-1].Id, s.lastId)
 	}
 
 	s.lastId = lastId
@@ -93,6 +99,33 @@ func (s *Stream) getFirstPage() []Event {
 	body := s.getRequest(endpoint)
 	events := parseEvents(body)
 	return events
+}
+
+func (s *Stream) loadPage(page int, maxId string, minId string) {
+	if page > 10 {
+		return
+	}
+
+	includeLast := false
+	paginated := fmt.Sprintf("%s?page=%d", endpoint, page)
+
+	body := s.getRequest(paginated)
+	events := parseEvents(body)
+	for _, event := range events {
+		if event.Id >= maxId {
+			continue
+		}
+		if event.Id <= minId {
+			includeLast = true
+			break
+		}
+
+		s.Events <- event.instantiate()
+	}
+
+	if !includeLast && len(events) > 0 {
+		s.loadPage(page+1, events[len(events)-1].Id, minId)
+	}
 }
 
 func (s *Stream) getRequest(url string) string {
