@@ -15,6 +15,15 @@ type Event struct {
 	CreatedAt string `json:"created_at"`
 }
 
+type WatchEvent struct {
+	Id        string
+	Actor     User
+	Repo      Repo
+	Payload   Payload
+	Public    bool
+	CreatedAt string `json:"created_at"`
+}
+
 type User struct {
 	Id        int64
 	Login     string
@@ -41,6 +50,18 @@ func parseEvents(body string) []Event {
 }
 
 // not implemented yet
-func (e *Event) instantiate() *Event {
-	return e
+func (e *Event) instantiate() interface{} {
+	switch e.Type {
+	case "WatchEvent":
+		return &WatchEvent{
+			Id:        e.Id,
+			Actor:     e.Actor,
+			Repo:      e.Repo,
+			Payload:   e.Payload,
+			Public:    e.Public,
+			CreatedAt: e.CreatedAt,
+		}
+	default:
+		return e
+	}
 }
