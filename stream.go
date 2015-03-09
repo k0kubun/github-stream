@@ -42,7 +42,7 @@ func (s *Stream) Stop() []interface{} {
 	s.stopped = true
 	<-s.done
 
-	events := []interface{}
+	events := []interface{}{}
 	for len(s.Events) > 0 {
 		event := <-s.Events
 		events = append(events, event)

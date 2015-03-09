@@ -10,6 +10,7 @@ type Event struct {
 	Type      string
 	Actor     User
 	Repo      Repo
+	Payload   Payload
 	Public    bool
 	CreatedAt string `json:"created_at"`
 }
@@ -25,6 +26,10 @@ type Repo struct {
 	Id   int64
 	Name string
 	Url  string
+}
+
+type Payload struct {
+	Action string
 }
 
 func parseEvents(body string) []Event {

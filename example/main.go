@@ -12,8 +12,7 @@ func main() {
 	defer s.Stop()
 
 	for {
-		ev := <-s.Events
-		pp.Println(ev.(stream.Event).Id)
+		pp.Println(<-s.Events)
 	}
 }
 
