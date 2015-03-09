@@ -26,7 +26,7 @@ func main() {
   defer s.Stop()
 
   for ev := <-s.Events {
-    pp.Println(q)
+    pp.Println(ev)
   }
 }
 ```
