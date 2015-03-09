@@ -12,6 +12,7 @@ type Stream struct {
 	stopped    bool
 	etag       string
 	lastId     string
+	done       chan bool
 }
 
 const (
@@ -30,6 +31,7 @@ func NewStream(tokens ...string) *Stream {
 		tokens:     tokens,
 		tokenIndex: 0,
 		stopped:    false,
+		done:       make(chan bool),
 	}
 	go s.pollEvents()
 	return s
@@ -37,11 +39,24 @@ func NewStream(tokens ...string) *Stream {
 
 // Stop polling and returns pending events synchronously.
 func (s *Stream) Stop() []interface{} {
-	return []interface{}{}
+	s.stopped = true
+	<-s.done
+
+	events := []interface{}
+	for len(s.Events) > 0 {
+		event := <-s.Events
+		events = append(events, event)
+	}
+	return events
 }
 
 func (s *Stream) pollEvents() {
 	for {
+		if s.stopped {
+			s.done <- true
+			break
+		}
+
 		events := s.getEvents()
 		for i := len(events) - 1; i >= 0; i-- {
 			event := events[i]
